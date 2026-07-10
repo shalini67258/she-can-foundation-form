@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>She Can Foundation - Contact Us</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="page">
+    <header class="header">
+      <div class="logo-circle">SC</div>
+      <h1>She Can Foundation</h1>
+      <p class="tagline">Empowering women, one step at a time 🌱</p>
+    </header>
+
+    <main class="card">
+      <h2>Get in Touch</h2>
+      <p class="sub">Fill the form below and we'll get back to you.</p>
+
+      <form id="contactForm" novalidate>
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" placeholder="Your full name" />
+          <span class="error" id="nameError"></span>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" />
+          <span class="error" id="emailError"></span>
+        </div>
+
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="4" placeholder="Write your message..."></textarea>
+          <span class="error" id="messageError"></span>
+        </div>
+
+        <button type="submit" id="submitBtn">Submit</button>
+      </form>
+
+      <div id="successMsg" class="success-msg hidden">
+        ✅ Form Submitted Successfully
+      </div>
+      <div id="errorMsg" class="error-msg hidden"></div>
+    </main>
+
+    <footer class="footer">
+      <a href="admin.html">Admin Panel →</a>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

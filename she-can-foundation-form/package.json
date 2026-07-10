@@ -1,0 +1,13 @@
+{
+  "name": "she-can-foundation-contact-form",
+  "version": "1.0.0",
+  "description": "Full stack contact form project for She Can Foundation internship task",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "express": "^5.2.1"
+  }
+}
