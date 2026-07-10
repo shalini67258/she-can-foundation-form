@@ -12,17 +12,51 @@
     <header class="header">
       <div class="logo-circle">SC</div>
       <h1>Admin Panel</h1>
-      <p class="tagline">View all form submissions</p>
+      <p class="tagline">Register or log in to view submissions</p>
     </header>
 
-    <main class="card">
-      <div class="login-box">
-        <input type="password" id="adminPassword" placeholder="Enter admin password" />
-        <button id="loginBtn">View</button>
+    <!-- LOGIN CARD -->
+    <main class="card" id="loginCard">
+      <h2>Admin Login</h2>
+      <div class="field">
+        <label for="loginUsername">Username</label>
+        <input type="text" id="loginUsername" placeholder="Enter username" />
       </div>
-      <div class="error" id="adminError" style="margin-top:8px;"></div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter password" />
+      </div>
+      <button id="loginBtn">Log In</button>
+      <div class="error" id="loginError" style="margin-top:8px;"></div>
+      <p class="sub" style="margin-top:16px;">
+        No account yet? <a href="#" id="showRegister">Register as admin</a>
+      </p>
+    </main>
 
-      <table id="resultsTable" class="hidden">
+    <!-- REGISTER CARD -->
+    <main class="card hidden" id="registerCard">
+      <h2>Register Admin</h2>
+      <div class="field">
+        <label for="regUsername">Username</label>
+        <input type="text" id="regUsername" placeholder="Choose a username" />
+      </div>
+      <div class="field">
+        <label for="regPassword">Password</label>
+        <input type="password" id="regPassword" placeholder="Choose a password (min 6 chars)" />
+      </div>
+      <button id="registerBtn">Register</button>
+      <div class="error" id="registerError" style="margin-top:8px;"></div>
+      <div class="success-msg hidden" id="registerSuccess"></div>
+      <p class="sub" style="margin-top:16px;">
+        Already have an account? <a href="#" id="showLogin">Log in</a>
+      </p>
+    </main>
+
+    <!-- SUBMISSIONS CARD -->
+    <main class="card hidden" id="dataCard">
+      <h2>Submissions</h2>
+      <button id="logoutBtn" style="width:auto; padding:8px 14px; float:right;">Log Out</button>
+      <table id="resultsTable">
         <thead>
           <tr>
             <th>ID</th>
@@ -42,24 +76,111 @@
   </div>
 
   <script>
-    const loginBtn = document.getElementById('loginBtn');
-    const adminPassword = document.getElementById('adminPassword');
-    const adminError = document.getElementById('adminError');
-    const resultsTable = document.getElementById('resultsTable');
-    const resultsBody = document.getElementById('resultsBody');
+    const loginCard = document.getElementById('loginCard');
+    const registerCard = document.getElementById('registerCard');
+    const dataCard = document.getElementById('dataCard');
 
-    loginBtn.addEventListener('click', async () => {
-      adminError.textContent = '';
-      resultsTable.classList.add('hidden');
+    document.getElementById('showRegister').addEventListener('click', (e) => {
+      e.preventDefault();
+      loginCard.classList.add('hidden');
+      registerCard.classList.remove('hidden');
+    });
+
+    document.getElementById('showLogin').addEventListener('click', (e) => {
+      e.preventDefault();
+      registerCard.classList.add('hidden');
+      loginCard.classList.remove('hidden');
+    });
+
+    // ---------- Register ----------
+    document.getElementById('registerBtn').addEventListener('click', async () => {
+      const username = document.getElementById('regUsername').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const registerError = document.getElementById('registerError');
+      const registerSuccess = document.getElementById('registerSuccess');
+      registerError.textContent = '';
+      registerSuccess.classList.add('hidden');
 
       try {
-        const res = await fetch('/api/contact', {
-          headers: { 'x-admin-password': adminPassword.value },
+        const res = await fetch('/api/admin/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
         });
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          adminError.textContent = data.error || 'Failed to load submissions.';
+          registerError.textContent = data.error || 'Registration failed.';
+          return;
+        }
+
+        registerSuccess.textContent = data.message;
+        registerSuccess.classList.remove('hidden');
+        setTimeout(() => {
+          registerCard.classList.add('hidden');
+          loginCard.classList.remove('hidden');
+        }, 1200);
+      } catch (err) {
+        registerError.textContent = 'Could not reach the server.';
+      }
+    });
+
+    // ---------- Login ----------
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const loginError = document.getElementById('loginError');
+      loginError.textContent = '';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          loginError.textContent = data.error || 'Login failed.';
+          return;
+        }
+
+        sessionStorage.setItem('adminToken', data.token);
+        loginCard.classList.add('hidden');
+        loadSubmissions();
+      } catch (err) {
+        loginError.textContent = 'Could not reach the server.';
+      }
+    });
+
+    // ---------- Logout ----------
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const token = sessionStorage.getItem('adminToken');
+      await fetch('/api/admin/logout', {
+        method: 'POST',
+        headers: { 'x-admin-token': token },
+      });
+      sessionStorage.removeItem('adminToken');
+      dataCard.classList.add('hidden');
+      loginCard.classList.remove('hidden');
+    });
+
+    // ---------- Load submissions ----------
+    async function loadSubmissions() {
+      const token = sessionStorage.getItem('adminToken');
+      const resultsBody = document.getElementById('resultsBody');
+
+      try {
+        const res = await fetch('/api/contact', {
+          headers: { 'x-admin-token': token },
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          sessionStorage.removeItem('adminToken');
+          dataCard.classList.add('hidden');
+          loginCard.classList.remove('hidden');
+          document.getElementById('loginError').textContent = 'Session expired. Please log in again.';
           return;
         }
 
@@ -76,11 +197,17 @@
           resultsBody.appendChild(tr);
         });
 
-        resultsTable.classList.remove('hidden');
+        dataCard.classList.remove('hidden');
       } catch (err) {
-        adminError.textContent = 'Could not reach the server.';
+        console.error(err);
       }
-    });
+    }
+
+    // If already logged in this browser session, skip straight to data
+    if (sessionStorage.getItem('adminToken')) {
+      loginCard.classList.add('hidden');
+      loadSubmissions();
+    }
   </script>
 </body>
 </html>
